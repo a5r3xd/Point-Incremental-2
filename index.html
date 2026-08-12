@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rank Incremental</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+    font-family: "Roboto Mono", monospace;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 30px;
+    background: #000;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+}
+
+.game {
+    width: 700px;
+    max-width: 100%;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.tab-button.active {
+    background: #666;
+}
+
+#milestonesTabButton,
+#rebirthTabButton {
+    display: none;
+}
+
+#rebirthTabButton {
+    background: #173b66;
+}
+
+#rebirthTabButton.active {
+    background: #245b99;
+}
+
+.tab-content {
+    background: #111;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+.points-section {
+    background: #181818;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.points {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.rate {
+    font-size: 18px;
+    color: #aaa;
+    margin-top: 8px;
+}
+
+.overflow-warning {
+    color: red;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 12px;
+    display: none;
+}
+
+.actions {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+}
+
+.progression-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.progression-button {
+    width: 260px;
+    height: 100px;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+}
+
+#rankUp {
+    background: #4CAF50;
+}
+
+#tierUp {
+    background: #4c7faf;
+}
+
+#demote {
+    background: #b04a4a;
+    height: 70px;
+    margin-top: 10px;
+    display: none;
+}
+
+.progression-button:disabled {
+    background: #555 !important;
+    cursor: not-allowed;
+}
+
+.button-title {
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.button-description {
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    font-size: 13px;
+    text-align: center;
+}
+
+#demote .button-title {
+    height: 100%;
+    font-size: 18px;
+}
+
+.rank-display,
+.tier-display {
+    width: 260px;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #aaa;
+}
+
+.requirement {
+    width: 260px;
+    text-align: center;
+    margin-top: 4px;
+    font-size: 13px;
+    color: #777;
+}
+
+.subtabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.subtab-button {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 7px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.subtab-button.active {
+    background: #777;
+}
+
+#tiersSubtabButton {
+    display: none;
+}
+
+.milestone {
+    border: 2px solid #333;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 12px;
+}
+
+.milestone-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.milestone-description {
+    font-size: 17px;
+}
+
+.milestone-current {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #aaa;
+}
+
+.milestone-subtab-content {
+    display: none;
+}
+
+.milestone-subtab-content.active {
+    display: block;
+}
+
+.rebirth-content {
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #071525;
+    border-radius: 10px;
+    color: #6daeff;
+    font-size: 28px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <!-- MAIN NAVIGATION -->
+
+    <div class="tabs">
+
+        <button
+            class="tab-button active"
+            id="mainTabButton"
+            onclick="openTab('main')">
+            Main
+        </button>
+
+        <button
+            class="tab-button"
+            id="milestonesTabButton"
+            onclick="openTab('milestones')">
+            Milestones
+        </button>
+
+        <button
+            class="tab-button"
+            id="rebirthTabButton"
+            onclick="openTab('rebirth')">
+            Rebirth
+        </button>
+
+    </div>
+
+
+    <!-- MAIN TAB -->
+
+    <div class="tab-content" id="mainTab">
+
+        <div class="points-section">
+
+            <div class="points" id="pointsText">
+                You have 0 points.
+            </div>
+
+            <div class="rate" id="rateText">
+                (0.2/sec)
+            </div>
+
+            <div
+                class="overflow-warning"
+                id="overflowWarning">
+            </div>
+
+        </div>
+
+
+        <div class="actions">
+
+            <!-- RANK -->
+
+            <div class="progression-group">
+
+                <button
+                    id="rankUp"
+                    class="progression-button"
+                    disabled>
+
+                    <div class="button-title">
+                        Rank Up
+                    </div>
+
+                    <div
+                        class="button-description"
+                        id="rankUpDescription">
+                        Rank up, but reset your points.
+                        Each rank divides point gain by 5.
+                    </div>
+
+                </button>
+
+
+                <button
+                    id="demote"
+                    class="progression-button">
+
+                    <div class="button-title">
+                        Demote Yourself
+                    </div>
+
+                </button>
+
+
+                <div
+                    class="rank-display"
+                    id="rankText">
+                    Rank: 0
+                </div>
+
+            </div>
+
+
+            <!-- TIER -->
+
+            <div class="progression-group">
+
+                <button
+                    id="tierUp"
+                    class="progression-button"
+                    disabled>
+
+                    <div class="button-title">
+                        Tier Up
+                    </div>
+
+                    <div class="button-description">
+                        Tier up, but reset your rank.
+                    </div>
+
+                </button>
+
+
+                <div
+                    class="tier-display"
+                    id="tierText">
+                    Tier: 0
+                </div>
+
+                <div
+                    class="requirement"
+                    id="tierRequirement">
+                    Requires Rank 3
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MILESTONES TAB -->
+
+    <div
+        class="tab-content"
+        id="milestonesTab"
+        style="display: none;">
+
+        <div class="subtabs">
+
+            <button
+                class="subtab-button active"
+                id="ranksSubtabButton"
+                onclick="openMilestoneSubtab('ranks')">
+                Ranks
+            </button>
+
+            <button
+                class="subtab-button"
+                id="tiersSubtabButton"
+                onclick="openMilestoneSubtab('tiers')">
+                Tiers
+            </button>
+
+        </div>
+
+
+        <!-- RANK MILESTONES -->
+
+        <div
+            id="ranksSubtab"
+            class="milestone-subtab-content active">
+
+            <div
+                class="milestone"
+                id="rank1Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Rank 1:
+                </div>
+
+                <div class="milestone-description">
+                    2x points.
+                </div>
+
+                <div class="milestone-current">
+                    Currently: 2x
+                </div>
+
+            </div>
+
+
+            <div
+                class="milestone"
+                id="rank2Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Rank 2:
+                </div>
+
+                <div class="milestone-description">
+                    Points boost themselves.
+                </div>
+
+                <div
+                    class="milestone-current"
+                    id="rank2Current">
+                </div>
+
+            </div>
+
+
+            <div
+                class="milestone"
+                id="rank8Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Rank 8:
+                </div>
+
+                <div class="milestone-description">
+                    Permanently unlocks something mysterious.
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TIER MILESTONES -->
+
+        <div
+            id="tiersSubtab"
+            class="milestone-subtab-content">
+
+            <div
+                class="milestone"
+                id="tier1Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Tier 1:
+                </div>
+
+                <div class="milestone-description">
+                    4x points if you are at least rank 2.
+                </div>
+
+                <div class="milestone-current">
+                    Currently: 4x
+                </div>
+
+            </div>
+
+
+            <div
+                class="milestone"
+                id="tier2Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Tier 2:
+                </div>
+
+                <div class="milestone-description">
+                    You can now go beyond 1 point,
+                    all the way to 10, but point gain
+                    past 1 point will be softcapped.
+                </div>
+
+                <div class="milestone-current">
+                    Currently: Unlimited points,
+                    with softcap past 1
+                </div>
+
+            </div>
+
+
+            <div
+                class="milestone"
+                id="tier3Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Tier 3:
+                </div>
+
+                <div class="milestone-description">
+                    Increase your point cap to 1K, Rank 2's
+                    boost to points is squared, but past 900
+                    points, the softcap is way stronger.
+                    Unlocks a strange milestone at rank 8.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- REBIRTH TAB -->
+
+    <div
+        class="tab-content"
+        id="rebirthTab"
+        style="display: none;">
+
+        <div class="rebirth-content">
+            Under Construction
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   GAME STATE
+============================================================ */
+
+let points = 0;
+let rank = 0;
+let tier = 0;
+
+let milestonesUnlocked = false;
+let rebirthUnlocked = false;
+
+const BASE_GAIN = 0.2;
+
+const NORMAL_POINT_CAP = 1;
+const TIER_3_POINT_CAP = 1000;
+
+
+/* ============================================================
+   NUMBER FORMATTING
+============================================================ */
+
+function formatNumber(num) {
+
+    if (!Number.isFinite(num)) {
+        return "Infinity";
+    }
+
+    if (num < 1000) {
+        return num.toFixed(3);
+    }
+
+    const suffixes = [
+        { value: 1e33, suffix: "De" },
+        { value: 1e30, suffix: "No" },
+        { value: 1e27, suffix: "Oc" },
+        { value: 1e24, suffix: "Sp" },
+        { value: 1e21, suffix: "Sx" },
+        { value: 1e18, suffix: "Qt" },
+        { value: 1e15, suffix: "Qa" },
+        { value: 1e12, suffix: "T" },
+        { value: 1e9, suffix: "B" },
+        { value: 1e6, suffix: "M" },
+        { value: 1e3, suffix: "K" }
+    ];
+
+    if (num >= 1e36) {
+        return num.toExponential(2);
+    }
+
+    for (const entry of suffixes) {
+
+        if (num >= entry.value) {
+
+            return (
+                num / entry.value
+            ).toFixed(2) + entry.suffix;
+
+        }
+
+    }
+
+    return num.toFixed(3);
+}
+
+
+/* ============================================================
+   TIER REQUIREMENTS
+============================================================ */
+
+function getTierRequirement() {
+
+    if (tier === 0) {
+        return 3;
+    }
+
+    if (tier === 1) {
+        return 5;
+    }
+
+    let requirement = 5;
+
+    for (let i = 2; i < tier; i++) {
+
+        requirement =
+            Math.floor(
+                requirement * 1.5
+            );
+
+    }
+
+    return requirement;
+}
+
+
+/* ============================================================
+   POINT CAP
+============================================================ */
+
+function getPointCap() {
+
+    if (tier < 2) {
+        return NORMAL_POINT_CAP;
+    }
+
+    if (tier === 2) {
+        return Infinity;
+    }
+
+    return TIER_3_POINT_CAP;
+}
+
+
+/* ============================================================
+   RANK DIVISOR
+============================================================ */
+
+function getRankDivisor() {
+
+    if (tier >= 2) {
+        return 4;
+    }
+
+    return 5;
+}
+
+
+/* ============================================================
+   MILESTONE MULTIPLIERS
+============================================================ */
+
+function getMilestoneMultiplier() {
+
+    let multiplier = 1;
+
+    // Rank 1 = 2x
+
+    if (rank >= 1) {
+        multiplier *= 2;
+    }
+
+    /*
+        Rank 2:
+        1 + points * 10
+
+        At Tier 3:
+        the entire boost is squared.
+    */
+
+    if (rank >= 2) {
+
+        const rank2Boost =
+            1 + points * 10;
+
+        if (tier >= 3) {
+
+            multiplier *=
+                Math.pow(
+                    rank2Boost,
+                    2
+                );
+
+        } else {
+
+            multiplier *=
+                rank2Boost;
+
+        }
+
+    }
+
+    // Tier 1 = 4x at Rank 2+
+
+    if (
+        tier >= 1 &&
+        rank >= 2
+    ) {
+
+        multiplier *= 4;
+
+    }
+
+    return multiplier;
+}
+
+
+/* ============================================================
+   POINT GENERATION
+============================================================ */
+
+function getPointGain() {
+
+    const rankDivisor =
+        getRankDivisor();
+
+    let gain =
+        BASE_GAIN /
+        Math.pow(
+            rankDivisor,
+            rank
+        );
+
+    gain *=
+        getMilestoneMultiplier();
+
+
+    /*
+        Tier 2:
+        Above 1 point, divide by points².
+    */
+
+    if (
+        tier === 2 &&
+        points > 1
+    ) {
+
+        gain /=
+            Math.pow(
+                points,
+                2
+            );
+
+    }
+
+
+    /*
+        Tier 3+:
+        Above 1 point: points²
+        Above 900: points³
+    */
+
+    if (
+        tier >= 3 &&
+        points > 1
+    ) {
+
+        if (points <= 900) {
+
+            gain /=
+                Math.pow(
+                    points,
+                    2
+                );
+
+        } else {
+
+            gain /=
+                Math.pow(
+                    points,
+                    3
+                );
+
+        }
+
+    }
+
+    return gain;
+}
+
+
+/* ============================================================
+   UPDATE UI
+============================================================ */
+
+function updateUI() {
+
+    /*
+        Points
+    */
+
+    document.getElementById(
+        "pointsText"
+    ).textContent =
+        `You have ${formatNumber(points)} points.`;
+
+
+    /*
+        Rate
+    */
+
+    document.getElementById(
+        "rateText"
+    ).textContent =
+        `(${formatNumber(getPointGain())}/sec)`;
+
+
+    /*
+        Rank
+    */
+
+    document.getElementById(
+        "rankText"
+    ).textContent =
+        `Rank: ${formatNumber(rank)}`;
+
+
+    /*
+        Tier
+    */
+
+    document.getElementById(
+        "tierText"
+    ).textContent =
+        `Tier: ${formatNumber(tier)}`;
+
+
+    /*
+        Rank Up description dynamically changes
+        from 5 to 4 at Tier 2.
+    */
+
+    const rankDivisor =
+        getRankDivisor();
+
+    document.getElementById(
+        "rankUpDescription"
+    ).textContent =
+        `Rank up, but reset your points. Each rank divides point gain by ${rankDivisor}.`;
+
+
+    /*
+        Rank Up
+    */
+
+    document.getElementById(
+        "rankUp"
+    ).disabled =
+        points < NORMAL_POINT_CAP;
+
+
+    /*
+        Tier requirement
+    */
+
+    const requirement =
+        getTierRequirement();
+
+    document.getElementById(
+        "tierRequirement"
+    ).textContent =
+        `Requires Rank ${formatNumber(requirement)}`;
+
+    document.getElementById(
+        "tierUp"
+    ).disabled =
+        rank < requirement;
+
+
+    /*
+        Demote
+    */
+
+    const demote =
+        document.getElementById(
+            "demote"
+        );
+
+    if (tier >= 2) {
+
+        demote.style.display =
+            "block";
+
+        demote.disabled =
+            rank < 1;
+
+    } else {
+
+        demote.style.display =
+            "none";
+
+    }
+
+
+    /*
+        Milestones tab unlocks at Rank 1.
+    */
+
+    if (rank >= 1) {
+        milestonesUnlocked = true;
+    }
+
+    if (milestonesUnlocked) {
+
+        document.getElementById(
+            "milestonesTabButton"
+        ).style.display =
+            "block";
+
+        document.getElementById(
+            "rank1Milestone"
+        ).style.display =
+            "block";
+
+    }
+
+
+    /*
+        Rank 2 milestone.
+    */
+
+    if (rank >= 2) {
+
+        document.getElementById(
+            "rank2Milestone"
+        ).style.display =
+            "block";
+
+        const baseBoost =
+            1 + points * 10;
+
+        const currentBoost =
+            tier >= 3
+                ? Math.pow(
+                    baseBoost,
+                    2
+                )
+                : baseBoost;
+
+        document.getElementById(
+            "rank2Current"
+        ).textContent =
+            `Currently: ${formatNumber(currentBoost)}x`;
+
+    }
+
+
+    /*
+        Rank 8 milestone.
+
+        It can only be attained once Tier 3
+        has been reached.
+    */
+
+    if (
+        tier >= 3 &&
+        rank >= 8
+    ) {
+
+        document.getElementById(
+            "rank8Milestone"
+        ).style.display =
+            "block";
+
+        rebirthUnlocked = true;
+
+    }
+
+
+    /*
+        Rebirth tab permanently unlocks
+        after Rank 8 at Tier 3+.
+    */
+
+    if (rebirthUnlocked) {
+
+        document.getElementById(
+            "rebirthTabButton"
+        ).style.display =
+            "block";
+
+    }
+
+
+    /*
+        Tier 1 milestone.
+    */
+
+    if (tier >= 1) {
+
+        document.getElementById(
+            "tiersSubtabButton"
+        ).style.display =
+            "block";
+
+        document.getElementById(
+            "tier1Milestone"
+        ).style.display =
+            "block";
+
+    }
+
+
+    /*
+        Tier 2 milestone.
+    */
+
+    if (tier >= 2) {
+
+        document.getElementById(
+            "tier2Milestone"
+        ).style.display =
+            "block";
+
+    }
+
+
+    /*
+        Tier 3 milestone.
+    */
+
+    if (tier >= 3) {
+
+        document.getElementById(
+            "tier3Milestone"
+        ).style.display =
+            "block";
+
+    }
+
+
+    /*
+        Overflow warning.
+    */
+
+    const warning =
+        document.getElementById(
+            "overflowWarning"
+        );
+
+    if (
+        tier >= 2 &&
+        points > 1
+    ) {
+
+        let divisor;
+
+        if (
+            tier >= 3 &&
+            points > 900
+        ) {
+
+            divisor =
+                Math.pow(
+                    points,
+                    3
+                );
+
+        } else {
+
+            divisor =
+                Math.pow(
+                    points,
+                    2
+                );
+
+        }
+
+        warning.textContent =
+            `Due to point overflow past 1 point, your points are being divided by ${formatNumber(divisor)}!`;
+
+        warning.style.display =
+            "block";
+
+    } else {
+
+        warning.textContent =
+            "";
+
+        warning.style.display =
+            "none";
+
+    }
+
+}
+
+
+/* ============================================================
+   POINT GENERATION
+============================================================ */
+
+setInterval(() => {
+
+    points +=
+        getPointGain() / 10;
+
+    const cap =
+        getPointCap();
+
+    if (points > cap) {
+        points = cap;
+    }
+
+    updateUI();
+
+}, 100);
+
+
+/* ============================================================
+   RANK UP
+============================================================ */
+
+document.getElementById(
+    "rankUp"
+).addEventListener(
+    "click",
+    () => {
+
+        if (
+            points >=
+            NORMAL_POINT_CAP
+        ) {
+
+            points = 0;
+            rank++;
+
+            updateUI();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   DEMOTE
+============================================================ */
+
+document.getElementById(
+    "demote"
+).addEventListener(
+    "click",
+    () => {
+
+        if (
+            tier >= 2 &&
+            rank >= 1
+        ) {
+
+            rank--;
+            points = 0;
+
+            updateUI();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   TIER UP
+============================================================ */
+
+document.getElementById(
+    "tierUp"
+).addEventListener(
+    "click",
+    () => {
+
+        const requirement =
+            getTierRequirement();
+
+        if (
+            rank >= requirement
+        ) {
+
+            tier++;
+            rank = 0;
+            points = 0;
+
+            updateUI();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   MAIN TABS
+============================================================ */
+
+function openTab(tab) {
+
+    const mainTab =
+        document.getElementById(
+            "mainTab"
+        );
+
+    const milestonesTab =
+        document.getElementById(
+            "milestonesTab"
+        );
+
+    const rebirthTab =
+        document.getElementById(
+            "rebirthTab"
+        );
+
+    const mainButton =
+        document.getElementById(
+            "mainTabButton"
+        );
+
+    const milestonesButton =
+        document.getElementById(
+            "milestonesTabButton"
+        );
+
+    const rebirthButton =
+        document.getElementById(
+            "rebirthTabButton"
+        );
+
+
+    mainTab.style.display =
+        "none";
+
+    milestonesTab.style.display =
+        "none";
+
+    rebirthTab.style.display =
+        "none";
+
+
+    mainButton.classList.remove(
+        "active"
+    );
+
+    milestonesButton.classList.remove(
+        "active"
+    );
+
+    rebirthButton.classList.remove(
+        "active"
+    );
+
+
+    if (tab === "main") {
+
+        mainTab.style.display =
+            "block";
+
+        mainButton.classList.add(
+            "active"
+        );
+
+    }
+
+
+    if (
+        tab === "milestones" &&
+        milestonesUnlocked
+    ) {
+
+        milestonesTab.style.display =
+            "block";
+
+        milestonesButton.classList.add(
+            "active"
+        );
+
+    }
+
+
+    if (
+        tab === "rebirth" &&
+        rebirthUnlocked
+    ) {
+
+        rebirthTab.style.display =
+            "block";
+
+        rebirthButton.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   MILESTONE SUBTABS
+============================================================ */
+
+function openMilestoneSubtab(subtab) {
+
+    const ranks =
+        document.getElementById(
+            "ranksSubtab"
+        );
+
+    const tiers =
+        document.getElementById(
+            "tiersSubtab"
+        );
+
+    const ranksButton =
+        document.getElementById(
+            "ranksSubtabButton"
+        );
+
+    const tiersButton =
+        document.getElementById(
+            "tiersSubtabButton"
+        );
+
+
+    if (subtab === "ranks") {
+
+        ranks.classList.add(
+            "active"
+        );
+
+        tiers.classList.remove(
+            "active"
+        );
+
+        ranksButton.classList.add(
+            "active"
+        );
+
+        tiersButton.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    if (
+        subtab === "tiers" &&
+        tier >= 1
+    ) {
+
+        ranks.classList.remove(
+            "active"
+        );
+
+        tiers.classList.add(
+            "active"
+        );
+
+        ranksButton.classList.remove(
+            "active"
+        );
+
+        tiersButton.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   INITIALIZE
+============================================================ */
+
+updateUI();
+
+</script>
+
+</body>
+</html>
