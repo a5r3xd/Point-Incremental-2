@@ -1457,7 +1457,7 @@ function updateUI() {
 setInterval(() => {
 
     points +=
-        getPointGain() / 10;
+        getPointGain() / 100;
 
     const cap =
         getPointCap();
@@ -1468,7 +1468,7 @@ setInterval(() => {
 
     updateUI();
 
-}, 100);
+}, 10);
 
 setInterval(() => {
     saveGame();
