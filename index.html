@@ -475,6 +475,21 @@ body {
 
             </div>
 
+            <div
+                class="milestone"
+                id="rank9Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Rank 9:
+                </div>
+
+                <div class="milestone-description">
+                    First softcap is weaker.
+                </div>
+
+            </div>
+
         </div>
 
 
@@ -948,6 +963,11 @@ function getPointGain() {
     gain *=
         getMilestoneMultiplier();
 
+    const firstSoftcapExponent =
+        rank >= 9
+            ? 2.05
+            : 2.3;
+
 
     /*
         Tier 2:
@@ -962,7 +982,7 @@ function getPointGain() {
         gain /=
             Math.pow(
                 points,
-                2.3
+                firstSoftcapExponent
             );
 
     }
@@ -982,7 +1002,7 @@ function getPointGain() {
         gain /=
             Math.pow(
                 points,
-                2.3
+                firstSoftcapExponent
             );
 
         if (points > 900) {
@@ -1221,6 +1241,13 @@ function updateUI() {
 
     }
 
+    if (rank >= 9) {
+        document.getElementById(
+            "rank9Milestone"
+        ).style.display =
+            "block";
+    }
+
 
     /*
         Rebirth tab permanently unlocks
@@ -1324,11 +1351,15 @@ function updateUI() {
     ) {
 
         const warnings = [];
+        const redExponent =
+            rank >= 9
+                ? 2.05
+                : 2.3;
 
         if (tier >= 3) {
 
             warnings.push(
-                `<div style="color: red;">Due to point overflow past 1 point, your points are being divided by ${formatNumber(Math.pow(points, 2.3))}!</div>`
+                `<div style="color: red;">Due to point overflow past 1 point, your points are being divided by ${formatNumber(Math.pow(points, redExponent))}!</div>`
             );
 
         } else {
