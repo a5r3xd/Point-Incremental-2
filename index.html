@@ -520,7 +520,7 @@ body {
                 </div>
 
                 <div class="milestone-current">
-                    Currently: Unlimited points,
+                    Currently: Cap 10,
                     with softcap past 1
                 </div>
 
@@ -538,8 +538,8 @@ body {
 
                 <div class="milestone-description">
                     Increase your point cap to 1K, Rank 2's
-                    boost to points is squared, but past 900
-                    points, the softcap is way stronger.
+                    boost to points is squared, and at 900
+                    points a second softcap kicks in.
                     Unlocks a strange milestone at rank 8.
                 </div>
 
@@ -582,6 +582,7 @@ let rebirthUnlocked = false;
 const BASE_GAIN = 0.2;
 
 const NORMAL_POINT_CAP = 1;
+const TIER_2_POINT_CAP = 10;
 const TIER_3_POINT_CAP = 1000;
 
 
@@ -673,7 +674,7 @@ function getPointCap() {
     }
 
     if (tier === 2) {
-        return Infinity;
+        return TIER_2_POINT_CAP;
     }
 
     return TIER_3_POINT_CAP;
@@ -803,19 +804,17 @@ function getPointGain() {
         points > 1
     ) {
 
-        if (points <= 900) {
+        gain /=
+            Math.pow(
+                points,
+                2.3
+            );
+
+        if (points > 900) {
 
             gain /=
                 Math.pow(
-                    points,
-                    2.3
-                );
-
-        } else {
-
-            gain /=
-                Math.pow(
-                    points,
+                    points - 900,
                     3
                 );
 
@@ -1091,31 +1090,35 @@ function updateUI() {
         points > 1
     ) {
 
-        let divisor;
+        const warnings = [];
+
+        if (tier >= 3) {
+
+            warnings.push(
+                `<div style="color: red;">Due to point overflow past 1 point, your points are being divided by ${formatNumber(Math.pow(points, 2.3))}!</div>`
+            );
+
+        } else {
+
+            warnings.push(
+                `<div style="color: red;">Due to point overflow past 1 point, your points are being divided by ${formatNumber(Math.pow(points, 2))}!</div>`
+            );
+
+        }
 
         if (
             tier >= 3 &&
             points > 900
         ) {
 
-            divisor =
-                Math.pow(
-                    points,
-                    3
-                );
-
-        } else {
-
-            divisor =
-                Math.pow(
-                    points,
-                    2
-                );
+            warnings.push(
+                `<div style="color: orange; margin-top: 8px;">Second softcap reached: your points are being divided by ${formatNumber(Math.pow(points - 900, 3))}!</div>`
+            );
 
         }
 
-        warning.textContent =
-            `Due to point overflow past 1 point, your points are being divided by ${formatNumber(divisor)}!`;
+        warning.innerHTML =
+            warnings.join("");
 
         warning.style.display =
             "block";
