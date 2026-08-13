@@ -1061,6 +1061,22 @@ function getPointGain() {
 
 function updateUI() {
 
+    const milestoneIds = [
+        "rank1Milestone",
+        "rank2Milestone",
+        "rank8Milestone",
+        "rank10Milestone",
+        "tier1Milestone",
+        "tier2Milestone",
+        "tier3Milestone",
+        "tier4Milestone",
+        "tier5Milestone"
+    ];
+
+    milestoneIds.forEach((id) => {
+        document.getElementById(id).style.display = "none";
+    });
+
     /*
         Points
     */
