@@ -545,6 +545,21 @@ body {
 
             </div>
 
+            <div
+                class="milestone"
+                id="tier4Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Tier 4:
+                </div>
+
+                <div class="milestone-description">
+                    5x points per tier past 2.
+                </div>
+
+            </div>
+
         </div>
 
     </div>
@@ -557,8 +572,65 @@ body {
         id="rebirthTab"
         style="display: none;">
 
-        <div class="rebirth-content">
-            Under Construction
+        <div class="subtabs">
+
+            <button
+                class="subtab-button active"
+                id="rebirthResetSubtabButton"
+                onclick="openRebirthSubtab('reset')">
+                Reset
+            </button>
+
+            <button
+                class="subtab-button"
+                id="rebirthBoostsSubtabButton"
+                onclick="openRebirthSubtab('boosts')"
+                style="display: none;">
+                Rebirth Boosts
+            </button>
+
+        </div>
+
+        <div
+            id="rebirthResetSubtab"
+            class="milestone-subtab-content active">
+
+            <div class="rebirth-content" style="display: flex; flex-direction: column; gap: 16px; text-align: center; padding: 20px;">
+
+                <button
+                    id="rebirthButton"
+                    class="progression-button"
+                    style="width: 260px; height: 70px; background: #173b66;"
+                    disabled>
+
+                    <div class="button-title" style="font-size: 22px; height: 100%;">
+                        Rebirth
+                    </div>
+
+                </button>
+
+                <div id="rebirthRequirements" style="font-size: 18px; color: #b7d7ff;">
+                    Requires at least 1000 points.
+                </div>
+
+                <div id="rebirthPointsText" style="font-size: 20px; color: #dfe9ff;">
+                    Rebirth points: 0
+                </div>
+
+            </div>
+
+        </div>
+
+        <div
+            id="rebirthBoostsSubtab"
+            class="milestone-subtab-content">
+
+            <div class="rebirth-content">
+                <div id="rebirthBoostText">
+                    Your RP is boosting points by 1
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -575,6 +647,7 @@ body {
 let points = 0;
 let rank = 0;
 let tier = 0;
+let rebirthPoints = 0;
 
 let milestonesUnlocked = false;
 let rebirthUnlocked = false;
@@ -584,6 +657,8 @@ const BASE_GAIN = 0.2;
 const NORMAL_POINT_CAP = 1;
 const TIER_2_POINT_CAP = 10;
 const TIER_3_POINT_CAP = 1000;
+const TIER_3_REBIRTH_POINT_CAP = 1000000000;
+const REBIRTH_REQUIREMENT = 1000;
 
 
 /* ============================================================
@@ -664,6 +739,15 @@ function getTierRequirement() {
 
 
 /* ============================================================
+   REBIRTH
+============================================================ */
+
+function getRebirthBoost() {
+    return 1 + rebirthPoints * 2;
+}
+
+
+/* ============================================================
    POINT CAP
 ============================================================ */
 
@@ -675,6 +759,10 @@ function getPointCap() {
 
     if (tier === 2) {
         return TIER_2_POINT_CAP;
+    }
+
+    if (rebirthPoints > 0) {
+        return TIER_3_REBIRTH_POINT_CAP;
     }
 
     return TIER_3_POINT_CAP;
@@ -748,6 +836,15 @@ function getMilestoneMultiplier() {
 
         multiplier *= 4;
 
+    }
+
+    // Tier 4 = 5x points per tier past 2
+    if (tier >= 4) {
+        multiplier *= Math.pow(5, tier - 2);
+    }
+
+    if (rebirthPoints > 0) {
+        multiplier *= getRebirthBoost();
     }
 
     return multiplier;
@@ -913,6 +1010,39 @@ function updateUI() {
     ).disabled =
         rank < requirement;
 
+    const rebirthButton =
+        document.getElementById(
+            "rebirthButton"
+        );
+
+    rebirthButton.disabled =
+        !rebirthUnlocked || points < REBIRTH_REQUIREMENT;
+
+    document.getElementById(
+        "rebirthRequirements"
+    ).textContent =
+        `Requires at least ${formatNumber(REBIRTH_REQUIREMENT)} points.`;
+
+    document.getElementById(
+        "rebirthPointsText"
+    ).textContent =
+        `Rebirth points: ${formatNumber(rebirthPoints)}`;
+
+    const rebirthBoostsButton =
+        document.getElementById(
+            "rebirthBoostsSubtabButton"
+        );
+
+    if (rebirthPoints > 0) {
+        rebirthBoostsButton.style.display = "block";
+        document.getElementById(
+            "rebirthBoostText"
+        ).textContent =
+            `Your RP is boosting points by ${formatNumber(getRebirthBoost())}`;
+    } else {
+        rebirthBoostsButton.style.display = "none";
+    }
+
 
     /*
         Demote
@@ -1028,6 +1158,18 @@ function updateUI() {
 
     }
 
+    if (
+        rebirthUnlocked &&
+        rebirthPoints > 0
+    ) {
+
+        document.getElementById(
+            "rebirthBoostsSubtabButton"
+        ).style.display =
+            "block";
+
+    }
+
 
     /*
         Tier 1 milestone.
@@ -1070,6 +1212,19 @@ function updateUI() {
 
         document.getElementById(
             "tier3Milestone"
+        ).style.display =
+            "block";
+
+    }
+
+    /*
+        Tier 4 milestone.
+    */
+
+    if (tier >= 4) {
+
+        document.getElementById(
+            "tier4Milestone"
         ).style.display =
             "block";
 
@@ -1229,6 +1384,44 @@ document.getElementById(
             tier++;
             rank = 0;
             points = 0;
+
+            updateUI();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   REBIRTH
+============================================================ */
+
+document.getElementById(
+    "rebirthButton"
+).addEventListener(
+    "click",
+    () => {
+
+        if (
+            rebirthUnlocked &&
+            points >= REBIRTH_REQUIREMENT
+        ) {
+
+            rebirthPoints++;
+            points = 0;
+            rank = 0;
+            tier = 0;
+            milestonesUnlocked = false;
+
+            const rebirthTab =
+                document.getElementById(
+                    "rebirthTab"
+                );
+
+            if (rebirthTab.style.display === "block") {
+                openRebirthSubtab("reset");
+            }
 
             updateUI();
 
@@ -1408,6 +1601,78 @@ function openMilestoneSubtab(subtab) {
         );
 
         tiersButton.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   REBIRTH SUBTABS
+============================================================ */
+
+function openRebirthSubtab(subtab) {
+
+    const reset =
+        document.getElementById(
+            "rebirthResetSubtab"
+        );
+
+    const boosts =
+        document.getElementById(
+            "rebirthBoostsSubtab"
+        );
+
+    const resetButton =
+        document.getElementById(
+            "rebirthResetSubtabButton"
+        );
+
+    const boostsButton =
+        document.getElementById(
+            "rebirthBoostsSubtabButton"
+        );
+
+    reset.classList.remove(
+        "active"
+    );
+
+    boosts.classList.remove(
+        "active"
+    );
+
+    resetButton.classList.remove(
+        "active"
+    );
+
+    boostsButton.classList.remove(
+        "active"
+    );
+
+    if (subtab === "reset") {
+
+        reset.classList.add(
+            "active"
+        );
+
+        resetButton.classList.add(
+            "active"
+        );
+
+    }
+
+    if (
+        subtab === "boosts" &&
+        rebirthPoints > 0
+    ) {
+
+        boosts.classList.add(
+            "active"
+        );
+
+        boostsButton.classList.add(
             "active"
         );
 
