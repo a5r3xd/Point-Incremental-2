@@ -814,7 +814,7 @@ function getPointGain() {
 
             gain /=
                 Math.pow(
-                    points - 900,
+                    points - 899,
                     3
                 );
 
@@ -1112,7 +1112,7 @@ function updateUI() {
         ) {
 
             warnings.push(
-                `<div style="color: orange; margin-top: 8px;">Second softcap reached: your points are being divided by ${formatNumber(Math.pow(points - 900, 3))}!</div>`
+                `<div style="color: orange;">Due to point overflow^2 past 900 points, your points are being divided by ${formatNumber(Math.pow(points - 900, 3))}!</div>`
             );
 
         }
