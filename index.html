@@ -597,6 +597,10 @@ body {
 
             <div class="rebirth-content" style="display: flex; flex-direction: column; gap: 16px; text-align: center; padding: 20px;">
 
+                <div style="font-size: 16px; color: #dfe9ff; line-height: 1.5; max-width: 520px;">
+                    Rebirth resets EVERYTHING before this point for a rebirth point, which boosts points.
+                </div>
+
                 <button
                     id="rebirthButton"
                     class="progression-button"
@@ -659,6 +663,80 @@ const TIER_2_POINT_CAP = 10;
 const TIER_3_POINT_CAP = 1000;
 const TIER_3_REBIRTH_POINT_CAP = 1000000000;
 const REBIRTH_REQUIREMENT = 1000;
+const SAVE_KEY = "point-incremental-2-save";
+
+
+/* ============================================================
+   SAVE / LOAD
+============================================================ */
+
+function saveGame() {
+
+    const data = {
+        points,
+        rank,
+        tier,
+        rebirthPoints,
+        milestonesUnlocked,
+        rebirthUnlocked
+    };
+
+    localStorage.setItem(
+        SAVE_KEY,
+        JSON.stringify(data)
+    );
+
+}
+
+
+function loadGame() {
+
+    const raw =
+        localStorage.getItem(
+            SAVE_KEY
+        );
+
+    if (!raw) {
+        return;
+    }
+
+    try {
+
+        const data =
+            JSON.parse(raw);
+
+        if (typeof data.points === "number") {
+            points = data.points;
+        }
+
+        if (typeof data.rank === "number") {
+            rank = data.rank;
+        }
+
+        if (typeof data.tier === "number") {
+            tier = data.tier;
+        }
+
+        if (typeof data.rebirthPoints === "number") {
+            rebirthPoints = data.rebirthPoints;
+        }
+
+        if (typeof data.milestonesUnlocked === "boolean") {
+            milestonesUnlocked = data.milestonesUnlocked;
+        }
+
+        if (typeof data.rebirthUnlocked === "boolean") {
+            rebirthUnlocked = data.rebirthUnlocked;
+        }
+
+    } catch (error) {
+        console.warn(
+            "Failed to load save data:",
+            error
+        );
+    }
+
+}
 
 
 /* ============================================================
@@ -1311,6 +1389,15 @@ setInterval(() => {
 
 }, 100);
 
+setInterval(() => {
+    saveGame();
+}, 30000);
+
+window.addEventListener(
+    "beforeunload",
+    saveGame
+);
+
 
 /* ============================================================
    RANK UP
@@ -1685,6 +1772,7 @@ function openRebirthSubtab(subtab) {
    INITIALIZE
 ============================================================ */
 
+loadGame();
 updateUI();
 
 </script>
