@@ -477,15 +477,15 @@ body {
 
             <div
                 class="milestone"
-                id="rank9Milestone"
+                id="rank10Milestone"
                 style="display: none;">
 
                 <div class="milestone-title">
-                    Rank 9:
+                    Rank 10:
                 </div>
 
                 <div class="milestone-description">
-                    First softcap is weaker.
+                    Milestone kept on rebirth: Second softcap is weaker.
                 </div>
 
             </div>
@@ -571,6 +571,22 @@ body {
 
                 <div class="milestone-description">
                     5x points per tier past 2.
+                    First softcap is weaker.
+                </div>
+
+            </div>
+
+            <div
+                class="milestone"
+                id="tier5Milestone"
+                style="display: none;">
+
+                <div class="milestone-title">
+                    Tier 5:
+                </div>
+
+                <div class="milestone-description">
+                    Further decrease the rank divisor from 4 to 3.
                 </div>
 
             </div>
@@ -667,6 +683,7 @@ let points = 0;
 let rank = 0;
 let tier = 0;
 let rebirthPoints = 0;
+let secondSoftcapMilestoneActive = false;
 
 let milestonesUnlocked = false;
 let rebirthUnlocked = false;
@@ -692,6 +709,7 @@ function saveGame() {
         rank,
         tier,
         rebirthPoints,
+        secondSoftcapMilestoneActive,
         milestonesUnlocked,
         rebirthUnlocked
     };
@@ -734,6 +752,10 @@ function loadGame() {
 
         if (typeof data.rebirthPoints === "number") {
             rebirthPoints = data.rebirthPoints;
+        }
+
+        if (typeof data.secondSoftcapMilestoneActive === "boolean") {
+            secondSoftcapMilestoneActive = data.secondSoftcapMilestoneActive;
         }
 
         if (typeof data.milestonesUnlocked === "boolean") {
@@ -868,6 +890,10 @@ function getPointCap() {
 
 function getRankDivisor() {
 
+    if (tier >= 5) {
+        return 3;
+    }
+
     if (tier >= 2) {
         return 4;
     }
@@ -948,6 +974,11 @@ function getMilestoneMultiplier() {
    POINT GENERATION
 ============================================================ */
 
+function getSecondSoftcapExponent() {
+    return secondSoftcapMilestoneActive ? 2.5 : 3;
+}
+
+
 function getPointGain() {
 
     const rankDivisor =
@@ -964,9 +995,12 @@ function getPointGain() {
         getMilestoneMultiplier();
 
     const firstSoftcapExponent =
-        rank >= 9
+        tier >= 4
             ? 2.05
             : 2.3;
+
+    const secondSoftcapExponent =
+        getSecondSoftcapExponent();
 
 
     /*
@@ -1010,7 +1044,7 @@ function getPointGain() {
             gain /=
                 Math.pow(
                     points - 899,
-                    3
+                    secondSoftcapExponent
                 );
 
         }
@@ -1241,18 +1275,21 @@ function updateUI() {
 
     }
 
-    if (rank >= 9) {
-        document.getElementById(
-            "rank9Milestone"
-        ).style.display =
-            "block";
-    }
-
-
     /*
         Rebirth tab permanently unlocks
         after Rank 8 at Tier 3+.
     */
+
+    if (rank >= 10) {
+        secondSoftcapMilestoneActive = true;
+    }
+
+    if (secondSoftcapMilestoneActive) {
+        document.getElementById(
+            "rank10Milestone"
+        ).style.display =
+            "block";
+    }
 
     if (rebirthUnlocked) {
 
@@ -1335,6 +1372,15 @@ function updateUI() {
 
     }
 
+    if (tier >= 5) {
+
+        document.getElementById(
+            "tier5Milestone"
+        ).style.display =
+            "block";
+
+    }
+
 
     /*
         Overflow warning.
@@ -1352,9 +1398,13 @@ function updateUI() {
 
         const warnings = [];
         const redExponent =
-            rank >= 9
+            tier >= 4
                 ? 2.05
                 : 2.3;
+        const orangeExponent =
+            secondSoftcapMilestoneActive
+                ? 2.5
+                : 3;
 
         if (tier >= 3) {
 
@@ -1376,7 +1426,7 @@ function updateUI() {
         ) {
 
             warnings.push(
-                `<div style="color: orange;">Due to point overflow^2 past 900 points, your points are being divided by ${formatNumber(Math.pow(points - 899, 3))}!</div>`
+                `<div style="color: orange;">Due to point overflow^2 past 900 points, your points are being divided by ${formatNumber(Math.pow(points - 899, orangeExponent))}!</div>`
             );
 
         }
@@ -1530,6 +1580,7 @@ document.getElementById(
             points = 0;
             rank = 0;
             tier = 0;
+            secondSoftcapMilestoneActive = false;
             milestonesUnlocked = false;
 
             const rebirthTab =
